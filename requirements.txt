@@ -7,12 +7,14 @@ cachetools==5.5.0
 certifi==2024.8.30
 charset-normalizer==3.4.0
 click==8.1.7
+et_xmlfile==2.0.0
 Flask==3.0.3
 flatbuffers==24.3.25
 gast==0.6.0
 gitdb==4.0.11
 GitPython==3.1.43
 google-pasta==0.2.0
+googlemaps==4.10.0
 grpcio==1.67.0
 h5py==3.12.1
 idna==3.10
@@ -32,6 +34,7 @@ ml-dtypes==0.3.2
 namex==0.0.8
 narwhals==1.9.3
 numpy==1.26.4
+openpyxl==3.1.5
 opt_einsum==3.4.0
 optree==0.13.0
 packaging==24.1
@@ -68,3 +71,4 @@ urllib3==2.2.3
 Werkzeug==3.0.4
 wrapt==1.16.0
 zipp==3.20.2
+
