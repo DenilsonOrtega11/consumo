@@ -51,8 +51,8 @@ if st.button("Calcular Consumo"):
             modelo = LinearRegression()  # generamos la regresión lineal
             modelo.fit(df[variables_x], df[variable_y])  # entrenamos el modelo
 
-            dt = (distance_float + distance_float)
-            pt = peso
+            dt = (distance_float + distance_float)  # Esto es solo un ejemplo; asegúrate de usar el cálculo correcto para la distancia
+            pt = float(peso)  # Convierte el peso a float para que sea un número
 
             prediccion_nueva = pd.DataFrame({x1: [dt], x2: [pt]})
             ct = modelo.predict(prediccion_nueva)
