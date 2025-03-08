@@ -3,6 +3,7 @@ import googlemaps
 from datetime import datetime
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
 
 # Initialize Google Maps client
 API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]  # Store your API key in Streamlit secrets
@@ -57,6 +58,25 @@ if st.button("Calcular Consumo"):
             ct = modelo.predict(prediccion_nueva)
             st.success(f"Consumo de combustible aproximado: {round(ct[0], 3)}")
             st.success(f"Distancia total: {dt}")
+
+            # Evaluate model performance using metrics
+            y_true = df[variable_y]  # True values
+            y_pred = modelo.predict(df[variables_x])  # Predicted values
+
+            # Calculate the mean squared error
+            mse = mean_squared_error(y_true, y_pred)
+            st.write(f"Error Cuadrático Medio (MSE): {mse:.3f}")
+
+            # Calculate R squared (R²)
+            r2 = r2_score(y_true, y_pred)
+            st.write(f"R Cuadrado (R²): {r2:.3f}")
+
+            # Calculate Adjusted R squared (R² ajustado)
+            n = len(df)  # number of data points
+            p = len(variables_x)  # number of predictors
+            r2_adjusted = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+            st.write(f"R Cuadrado Ajustado (R² ajustado): {r2_adjusted:.3f}")
+
         else:
             st.error("No se pudo calcular la ruta. Verifique las ciudades ingresadas.")
     else:
