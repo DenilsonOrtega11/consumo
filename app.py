@@ -19,7 +19,7 @@ peso = st.text_input("Peso", placeholder="Ejemplo: 7200kg")
 if st.button("Calcular Consumo"):
     if origen and destino and peso:
         # Request directions from Google Maps API
-        directions_result = gmaps.directions(origen, destino, mode="driving", departure_time=datetime.now(),avoid=["tolls", "highways"])
+        directions_result = gmaps.directions(origen, destino, mode="driving", departure_time=datetime.now(), avoid=["tolls", "highways"])
 
         if directions_result:
             # Extract distance and duration from the response
@@ -33,11 +33,13 @@ if st.button("Calcular Consumo"):
             distance_float = distance.replace(",", "")
             distance_float = float((distance_float.split()[0]))
 
-            # Optionally, display a map with the route
-            # route = directions_result[0]['overview_polyline']['points']
-            # st.map(gmaps.static_map(size="400x400", markers=[origen, destino], path=f"enc:{route}"))
-
+            # Load dataset
             df = pd.read_excel("dataset_MOE.xlsx")
+
+            # Calculate and display the correlation matrix
+            correlation_matrix = df[['distancia', 'peso', 'litros']].corr()
+            st.write("Matriz de Correlación:")
+            st.write(correlation_matrix)
 
             x1 = "distancia"
             x2 = "peso"
@@ -45,10 +47,10 @@ if st.button("Calcular Consumo"):
 
             variables_x = [x1, x2]
             variable_y = y
-            modelo = LinearRegression()# generamos la regresión lineal
-            modelo.fit(df[variables_x], df[variable_y])# entrenamos el modelo
+            modelo = LinearRegression()  # generamos la regresión lineal
+            modelo.fit(df[variables_x], df[variable_y])  # entrenamos el modelo
 
-            dt = (distance_float+distance_float)
+            dt = (distance_float + distance_float)
             pt = peso
 
             prediccion_nueva = pd.DataFrame({x1: [dt], x2: [pt]})
