@@ -3,6 +3,7 @@ import googlemaps
 from datetime import datetime
 import pandas as pd
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 
 # Initialize Google Maps client
 API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]  # Store your API key in Streamlit secrets
@@ -45,8 +46,12 @@ if st.button("Calcular Consumo"):
 
             variables_x = [x1, x2]
             variable_y = y
-            modelo = LinearRegression()# generamos la regresión lineal
-            modelo.fit(df[variables_x], df[variable_y])# entrenamos el modelo
+            poly = PolynomialFeatures(degree=2)
+
+            X_poly = poly.fit_transform(df[variables_x])
+            modelo = LinearRegression()
+
+            modelo.fit(X_poly, df[variable_y])
 
             dt = (distance_float+distance_float)
             pt = peso
