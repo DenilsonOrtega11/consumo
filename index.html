@@ -1,68 +1,61 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calcular Distancia con Google Maps API</title>
-   
-</head>
-<body onload="initMap()">
-    <h1>Calcular Distancia entre Dos Ciudades</h1>
-    
-    <div>
-        <label for="origen">Ciudad de Origen:</label>
-        <input type="text" id="origen" placeholder="Ejemplo: Ciudad de México" required>
-        
-        <label for="destino">Ciudad de Destino:</label>
-        <input type="text" id="destino" placeholder="Ejemplo: Monterrey" required>
+import streamlit as st
+import googlemaps
+from datetime import datetime
+import pandas as pd
+from sklearn.linear_model import LinearRegression
 
-        <button onclick="calcularRuta()">Calcular Distancia</button>
-    </div>
+# Initialize Google Maps client
+API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]  # Store your API key in Streamlit secrets
+gmaps = googlemaps.Client(key=API_KEY)
 
-    <div id="map"></div>
-    <div id="output" style="margin-top: 20px;"></div>
+# Title of the application
+st.title("Consumo de combustible entre ciudades")
 
-     <script>
-        let map;
-        let directionsService;
-        let directionsRenderer;
+# User input for origin and destination
+origen = st.text_input("Ciudad de Origen", placeholder="Ejemplo: Ciudad de México")
+destino = st.text_input("Ciudad de Destino", placeholder="Ejemplo: Monterrey")
+peso = st.text_input("Peso", placeholder="Ejemplo: 7200kg")
 
-        function initMap() {
-            // Crear un mapa centrado en un punto
-            // map = new google.maps.Map(document.getElementById('map'), {
-            //     zoom: 7,
-            //     center: {lat: 19.4326, lng: -99.1332} // Ciudad de México
-            // });
+if st.button("Calcular Consumo"):
+    if origen and destino and peso:
+        # Request directions from Google Maps API
+        directions_result = gmaps.directions(origen, destino, mode="driving", departure_time=datetime.now(),avoid=["tolls", "highways"])
 
-            // Inicializar el DirectionsService y DirectionsRenderer
-            directionsService = new google.maps.DirectionsService();
-            directionsRenderer = new google.maps.DirectionsRenderer();
-            // directionsRenderer.setMap(map);
-        }
+        if directions_result:
+            # Extract distance and duration from the response
+            distance = directions_result[0]['legs'][0]['distance']['text']
+            duration = directions_result[0]['legs'][0]['duration']['text']
 
-        function calcularRuta() {
-            const origen = document.getElementById('origen').value;
-            const destino = document.getElementById('destino').value;
+            # Display results
+            st.success(f"Distancia: {distance}")
+            # st.success(f"Duración: {duration}")
 
-            // Calcular la ruta
-            directionsService.route({
-                origin: origen,
-                destination: destino,
-                travelMode: 'DRIVING'
-            }, function(response, status) {
-                if (status === 'OK') {
-                    directionsRenderer.setDirections(response);
-                    const distance = response.routes[0].legs[0].distance.text; // Obtener la distancia
-                    const duration = response.routes[0].legs[0].duration.text; // Obtener la duración
-                    document.getElementById('output').innerHTML = 'Distancia: ' + distance + '<br>Duración: ' + duration;
-                } else {
-                    window.alert('No se pudo calcular la ruta debido a: ' + status);
-                }
-            });
-        }
-    </script>
+            distance_float = distance.replace(",", "")
+            distance_float = float((distance_float.split()[0]))
 
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtvAfOFRUnD0HH3anYsRQP5xpurMfFZY0&libraries=places"></script>
+            # Optionally, display a map with the route
+            # route = directions_result[0]['overview_polyline']['points']
+            # st.map(gmaps.static_map(size="400x400", markers=[origen, destino], path=f"enc:{route}"))
 
-</body>
-</html>
+            df = pd.read_excel("dataset_MOE.xlsx")
+
+            x1 = "distancia"
+            x2 = "peso"
+            y = "litros"
+
+            variables_x = [x1, x2]
+            variable_y = y
+            modelo = LinearRegression()# generamos la regresión lineal
+            modelo.fit(df[variables_x], df[variable_y])# entrenamos el modelo
+
+            dt = (distance_float+distance_float)
+            pt = peso
+
+            prediccion_nueva = pd.DataFrame({x1: [dt], x2: [pt]})
+            ct = modelo.predict(prediccion_nueva)
+            st.success(f"Consumo de combustible aproximado: {round(ct[0], 3)}")
+            st.success(f"Distancia total: {dt}")
+        else:
+            st.error("No se pudo calcular la ruta. Verifique las ciudades ingresadas.")
+    else:
+        st.warning("Por favor, ingrese todos los campos.")
