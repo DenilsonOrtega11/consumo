@@ -3,7 +3,6 @@ import googlemaps
 from datetime import datetime
 import pandas as pd
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, r2_score
 
 # Initialize Google Maps client
 API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]  # Store your API key in Streamlit secrets
@@ -20,7 +19,7 @@ peso = st.text_input("Peso", placeholder="Ejemplo: 7200kg")
 if st.button("Calcular Consumo"):
     if origen and destino and peso:
         # Request directions from Google Maps API
-        directions_result = gmaps.directions(origen, destino, mode="driving", departure_time=datetime.now(), avoid=["tolls", "highways"])
+        directions_result = gmaps.directions(origen, destino, mode="driving", departure_time=datetime.now(),avoid=["tolls", "highways"])
 
         if directions_result:
             # Extract distance and duration from the response
@@ -34,13 +33,11 @@ if st.button("Calcular Consumo"):
             distance_float = distance.replace(",", "")
             distance_float = float((distance_float.split()[0]))
 
-            # Load dataset
-            df = pd.read_excel("dataset_MOE.xlsx")
+            # Optionally, display a map with the route
+            # route = directions_result[0]['overview_polyline']['points']
+            # st.map(gmaps.static_map(size="400x400", markers=[origen, destino], path=f"enc:{route}"))
 
-            # Calculate and display the correlation matrix
-            correlation_matrix = df[['distancia', 'peso', 'litros']].corr()
-            st.write("Matriz de Correlación:")
-            st.write(correlation_matrix)
+            df = pd.read_excel("dataset_MOE.xlsx")
 
             x1 = "distancia"
             x2 = "peso"
@@ -48,35 +45,16 @@ if st.button("Calcular Consumo"):
 
             variables_x = [x1, x2]
             variable_y = y
-            modelo = LinearRegression()  # generamos la regresión lineal
-            modelo.fit(df[variables_x], df[variable_y])  # entrenamos el modelo
+            modelo = LinearRegression()# generamos la regresión lineal
+            modelo.fit(df[variables_x], df[variable_y])# entrenamos el modelo
 
-            dt = (distance_float + distance_float)  # Esto es solo un ejemplo; asegúrate de usar el cálculo correcto para la distancia
-            pt = float(peso)  # Convierte el peso a float para que sea un número
+            dt = (distance_float+distance_float)
+            pt = peso
 
             prediccion_nueva = pd.DataFrame({x1: [dt], x2: [pt]})
             ct = modelo.predict(prediccion_nueva)
             st.success(f"Consumo de combustible aproximado: {round(ct[0], 3)}")
             st.success(f"Distancia total: {dt}")
-
-            # Evaluate model performance using metrics
-            y_true = df[variable_y]  # True values
-            y_pred = modelo.predict(df[variables_x])  # Predicted values
-
-            # Calculate the mean squared error
-            mse = mean_squared_error(y_true, y_pred)
-            st.write(f"Error Cuadrático Medio (MSE): {mse:.3f}")
-
-            # Calculate R squared (R²)
-            r2 = r2_score(y_true, y_pred)
-            st.write(f"R Cuadrado (R²): {r2:.3f}")
-
-            # Calculate Adjusted R squared (R² ajustado)
-            n = len(df)  # number of data points
-            p = len(variables_x)  # number of predictors
-            r2_adjusted = 1 - (1 - r2) * (n - 1) / (n - p - 1)
-            st.write(f"R Cuadrado Ajustado (R² ajustado): {r2_adjusted:.3f}")
-
         else:
             st.error("No se pudo calcular la ruta. Verifique las ciudades ingresadas.")
     else:
