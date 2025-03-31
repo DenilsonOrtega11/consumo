@@ -11,7 +11,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 # API Key de Google Maps
-API_KEY = "AIzaSyDeAIRz3hXw8xrQZWzmuQchmYi3Vuo0zZE"
+API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
 gmaps = googlemaps.Client(key=API_KEY)
 
 # Título de la aplicación
