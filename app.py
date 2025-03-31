@@ -4,54 +4,120 @@ from datetime import datetime
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
+from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
+import statsmodels.api as sm
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
+# API Key de Google Maps
+API_KEY = "AIzaSyDeAIRz3hXw8xrQZWzmuQchmYi3Vuo0zZE"
 gmaps = googlemaps.Client(key=API_KEY)
 
-st.title("Consumo de combustible entre ciudades")
+# Título de la aplicación
+st.set_page_config(page_title="Consumo", page_icon="🛞", layout="wide")
+st.title("Consumo de Combustible entre Ciudades")
 
-origen = st.text_input("Ciudad de Origen", placeholder="Ejemplo: Ciudad de México")
-destino = st.text_input("Ciudad de Destino", placeholder="Ejemplo: Monterrey")
-peso = st.text_input("Peso", placeholder="Ejemplo: 7200kg")
+# Entrada de usuario para las ciudades de origen y destino
+origen = st.text_input("Ciudad de Origen (Ejemplo: Ciudad de México):")
+destino = st.text_input("Ciudad de Destino (Ejemplo: Monterrey):")
 
-if st.button("Calcular Consumo"):
-    if origen and destino and peso:
-        directions_result = gmaps.directions(origen, destino, mode="driving", departure_time=datetime.now(), avoid=["tolls", "highways"])
+# Si se ingresan las ciudades, calcular la ruta y mostrar resultados
+if origen and destino:
+    st.write("Calculando ruta entre las ciudades...")
+    
+    directions_result_ida = gmaps.directions(origen, destino, mode="driving", departure_time=datetime.now(), avoid=["tolls", "highways"])
+    directions_result_vuelta = gmaps.directions(destino, origen, mode="driving", departure_time=datetime.now(), avoid=["tolls", "highways"])
 
-        if directions_result:
-            distance = directions_result[0]['legs'][0]['distance']['text']
-            duration = directions_result[0]['legs'][0]['duration']['text']
+    if directions_result_ida and directions_result_vuelta:
+        # Obtener la duración del viaje
+        duration_ida = directions_result_ida[0]['legs'][0]['duration']['value']
+        duration_vuelta = directions_result_vuelta[0]['legs'][0]['duration']['value']
 
-            st.success(f"Distancia: {distance}")
+        duration_ida_hours = duration_ida / 3600
+        duration_vuelta_hours = duration_vuelta / 3600
 
-            distance_float = distance.replace(",", "")
-            distance_float = float((distance_float.split()[0]))
+        total_duration_hours = duration_ida_hours + duration_vuelta_hours
+        acondicionado_hours = total_duration_hours * 0.30
 
-            df = pd.read_excel("dataset_MOE.xlsx")
+        st.write(f"Duración total del viaje de ida y vuelta: {total_duration_hours:.2f} horas")
+        st.write(f"Horas de aire acondicionado asignadas (30%): {acondicionado_hours:.2f} horas")
 
-            x1 = "distancia"
-            x2 = "peso"
-            y = "litros"
+        # Cargar el dataset
+        df = pd.read_excel("dataset_MOE.xlsx")
 
-            variables_x = [x1, x2]
-            variable_y = y
+        if 'acondicionado' not in df.columns:
+            st.error("La columna 'acondicionado' no se encuentra en el archivo.")
+            st.stop()
 
-            poly = PolynomialFeatures(degree=2)
-            X_poly = poly.fit_transform(df[variables_x])
+        # Correlación entre variables
+        correlation_matrix = df[['distancia', 'acondicionado', 'litros']].corr()
+        st.write("Matriz de Correlación:")
+        st.write(correlation_matrix)
 
-            modelo = LinearRegression()
-            modelo.fit(X_poly, df[variable_y])
+        # Variables para el modelo
+        x1 = "distancia"
+        x2 = "acondicionado"
+        y = "litros"
 
-            dt = (distance_float + distance_float)
-            pt = float(peso)
+        variables_x = [x1, x2]
+        variable_y = y
 
-            prediccion_nueva = pd.DataFrame({x1: [dt], x2: [pt]})
-            prediccion_nueva_poly = poly.transform(prediccion_nueva)
-            ct = modelo.predict(prediccion_nueva_poly)
+        # Modelo de Regresión Polinómica
+        poly = PolynomialFeatures(degree=2)
+        X_poly = poly.fit_transform(df[variables_x])
 
-            st.success(f"Consumo de combustible aproximado: {round(ct[0], 3)}")
-            st.success(f"Distancia total: {dt}")
-        else:
-            st.error("No se pudo calcular la ruta. Verifique las ciudades ingresadas.")
+        modelo = LinearRegression()
+        modelo.fit(X_poly, df[variable_y])
+
+        # Predicción de Consumo de Combustible
+        dt = (total_duration_hours * 100)  # Estimación de distancia total
+        prediccion_nueva = pd.DataFrame({x1: [dt], x2: [acondicionado_hours]})
+        prediccion_nueva_poly = poly.transform(prediccion_nueva)
+        ct = modelo.predict(prediccion_nueva_poly)
+
+        st.write(f"Consumo de combustible aproximado: {round(ct[0], 3)} litros")
+        st.write(f"Distancia total estimada: {dt} km")
+        st.write(f"Horas de aire acondicionado aproximadas: {acondicionado_hours:.2f} horas")
+
+        # Evaluación del modelo
+        y_true = df[variable_y]
+        y_pred = modelo.predict(X_poly)
+
+        mse = mean_squared_error(y_true, y_pred)
+        st.write(f"Error Cuadrático Medio (MSE): {mse:.3f}")
+
+        r2 = r2_score(y_true, y_pred)
+        st.write(f"R Cuadrado (R²): {r2:.3f}")
+
+        n = len(df)
+        p = len(variables_x)
+        r2_adjusted = 1 - (1 - r2) * (n - 1) / (n - p - 1)
+        st.write(f"R Cuadrado Ajustado (R² ajustado): {r2_adjusted:.3f}")
+
+        # OLS y VIF
+        X_with_const = sm.add_constant(df[variables_x])
+        modelo_OLS = sm.OLS(y_true, X_with_const).fit()
+
+        st.write("Resumen del Modelo OLS (Regresión Lineal):")
+        st.text(modelo_OLS.summary())
+
+        from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+        vif_data = pd.DataFrame()
+        vif_data["Variable"] = X_with_const.columns
+        vif_data["VIF"] = [variance_inflation_factor(X_with_const.values, i) for i in range(X_with_const.shape[1])]
+
+        st.write("VIF de cada variable:")
+        st.write(vif_data)
+
+        # Mostrar gráfica de la matriz de correlación
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
+        plt.title("Matriz de Correlación")
+        st.pyplot(plt)
+
     else:
-        st.warning("Por favor, ingrese todos los campos.")
+        st.error("No se pudo calcular la ruta de ida y vuelta. Verifique las ciudades ingresadas.")
+else:
+    st.warning("Por favor, ingrese todas las ciudades.")
