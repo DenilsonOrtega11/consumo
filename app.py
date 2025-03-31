@@ -42,7 +42,7 @@ if st.button("Iniciar Predicción"):
             acondicionado_hours = total_duration_hours * 0.30
 
             st.write(f"Duración total del viaje de ida y vuelta: {total_duration_hours:.2f} horas")
-            st.write(f"Horas de aire acondicionado asignadas (30%): {acondicionado_hours:.2f} horas")
+            st.write(f"Horas de aire acondicionado aproximadas (30%): {acondicionado_hours:.2f} horas")
 
             # Cargar el dataset
             df = pd.read_excel("dataset_MOE.xlsx")
@@ -50,11 +50,6 @@ if st.button("Iniciar Predicción"):
             if 'acondicionado' not in df.columns:
                 st.error("La columna 'acondicionado' no se encuentra en el archivo.")
                 st.stop()
-
-            # Correlación entre variables
-            correlation_matrix = df[['distancia', 'acondicionado', 'litros']].corr()
-            st.write("Matriz de Correlación:")
-            st.write(correlation_matrix)
 
             # Variables para el modelo
             x1 = "distancia"
