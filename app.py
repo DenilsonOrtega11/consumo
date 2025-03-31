@@ -6,9 +6,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
-import statsmodels.api as sm
-import seaborn as sns
-import matplotlib.pyplot as plt
+
 
 # API Key de Google Maps
 API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
@@ -79,43 +77,6 @@ if origen and destino:
         st.write(f"Consumo de combustible aproximado: {round(ct[0], 3)} litros")
         st.write(f"Distancia total estimada: {dt} km")
         st.write(f"Horas de aire acondicionado aproximadas: {acondicionado_hours:.2f} horas")
-
-        # Evaluación del modelo
-        y_true = df[variable_y]
-        y_pred = modelo.predict(X_poly)
-
-        mse = mean_squared_error(y_true, y_pred)
-        st.write(f"Error Cuadrático Medio (MSE): {mse:.3f}")
-
-        r2 = r2_score(y_true, y_pred)
-        st.write(f"R Cuadrado (R²): {r2:.3f}")
-
-        n = len(df)
-        p = len(variables_x)
-        r2_adjusted = 1 - (1 - r2) * (n - 1) / (n - p - 1)
-        st.write(f"R Cuadrado Ajustado (R² ajustado): {r2_adjusted:.3f}")
-
-        # OLS y VIF
-        X_with_const = sm.add_constant(df[variables_x])
-        modelo_OLS = sm.OLS(y_true, X_with_const).fit()
-
-        st.write("Resumen del Modelo OLS (Regresión Lineal):")
-        st.text(modelo_OLS.summary())
-
-        from statsmodels.stats.outliers_influence import variance_inflation_factor
-
-        vif_data = pd.DataFrame()
-        vif_data["Variable"] = X_with_const.columns
-        vif_data["VIF"] = [variance_inflation_factor(X_with_const.values, i) for i in range(X_with_const.shape[1])]
-
-        st.write("VIF de cada variable:")
-        st.write(vif_data)
-
-        # Mostrar gráfica de la matriz de correlación
-        plt.figure(figsize=(8, 6))
-        sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".2f", linewidths=0.5)
-        plt.title("Matriz de Correlación")
-        st.pyplot(plt)
 
     else:
         st.error("No se pudo calcular la ruta de ida y vuelta. Verifique las ciudades ingresadas.")
