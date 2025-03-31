@@ -42,7 +42,7 @@ if st.button("Iniciar Predicción"):
             acondicionado_hours = total_duration_hours * 0.30
 
             st.write(f"Duración total del viaje de ida y vuelta: {total_duration_hours:.2f} horas")
-            st.write(f"Horas de aire acondicionado aproximadas (30%): {acondicionado_hours:.2f} horas")
+            st.write(f"Horas de aire acondicionado aproximadas: {acondicionado_hours:.2f} horas")
 
             # Cargar el dataset
             df = pd.read_excel("dataset_MOE.xlsx")
@@ -73,8 +73,7 @@ if st.button("Iniciar Predicción"):
             ct = modelo.predict(prediccion_nueva_poly)
 
             st.write(f"Consumo de combustible aproximado: {round(ct[0], 3)} litros")
-            st.write(f"Distancia total estimada: {dt} km")
-            st.write(f"Horas de aire acondicionado aproximadas: {acondicionado_hours:.2f} horas")
+            st.write(f"Distancia total estimada: {dt:.2f} km")
 
         else:
             st.error("No se pudo calcular la ruta de ida y vuelta. Verifique las ciudades ingresadas.")
