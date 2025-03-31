@@ -8,7 +8,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
 import statsmodels.api as sm
 # //import seaborn as sns
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 # API Key de Google Maps
 API_KEY = st.secrets["GOOGLE_MAPS_API_KEY"]
